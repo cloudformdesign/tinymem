@@ -38,7 +38,7 @@ void tm_init();
  * \return          tm_index value. Use tm_void or other typecasts to convert
  *                  to useable pointer
  */
-tm_index tmalloc(tm_size size);
+inline tm_index tm_alloc(tm_size size);
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -46,7 +46,15 @@ tm_index tmalloc(tm_size size);
  * \param index     tm_index value to free
  * \return          void
  */
-void tmfree(tm_index index);
+inline void tm_free(tm_index index);
+
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief           get sizeof the data referenced by index
+ * \param index     tm_index value
+ * \return          size of referenced data in bytes
+ */
+inline tm_size tm_sizeof(tm_index index);
 
 /*---------------------------------------------------------------------------*/
 /**
