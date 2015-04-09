@@ -77,6 +77,10 @@ inline void *tm_void(tm_index index);
 #define tm_uint16_p(index)      ((uint16_t *)tm_void(index))
 #define tm_int32_p(index)       ((int32_t *)tm_void(index))
 #define tm_uint32_p(index)      ((uint32_t *)tm_void(index))
+
+
+void tm_print_stats();
+
 #endif
 
 /** @} */

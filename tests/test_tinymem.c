@@ -1,4 +1,5 @@
 #include "minunit.h"
+#include "tinymem_platform.h"
 #include "tinymem.h"
 
 #define TABLE_STANDIN NULL
@@ -30,20 +31,27 @@ bool check_indexes(tm_index *indexes, tm_index len){
     return true;
 }
 
-bool fill_indexes(tm_index *indexes, tm_index len, tm_size mod){
+bool fill_indexes(tm_index *indexes, tm_index len, tm_size maxlen){
     // Allocate indexex of size index % mod + 1
     tm_index i;
+    printf("filling indexes\n");
     for(i=0; i<len; i++){
         if(!indexes[i]){
-            if(!alloc_index(indexes, i, i % mod + 1)) return false;
+            if(!alloc_index(indexes, i, i % maxlen + 1)){
+                printf("Failed to fill index %u\n", i);
+                tm_print_stats();
+                return false;
+            }
         }
     }
+    printf("indexes filled\n");
     return true;
 }
 
 bool alloc_index(tm_index *indexes, tm_index index, tm_size size){
     tm_size i;
     uint8_t *data;
+    /*printf("allocating: %u\n", index);*/
     indexes[index] = tm_alloc(size);
     if(!indexes[index]) return false;
     data = tm_uint8_p(indexes[index]);
@@ -61,8 +69,17 @@ bool free_index(tm_index *indexes, tm_index index){
 
 char *test_basic(){
     // allocate and dealloc
-    tm_index indexes[10];
-    alloc_index(indexes, 0, 4);
+    tm_size i;
+    tm_index indexes[TM_MAX_POOL_PTRS - 1] = {0};
+    mu_assert(fill_indexes(indexes, TM_MAX_POOL_PTRS - 1, 63), "filled");
+
+    // Deallocate every other one (backwards) and then refill it
+    for(i=TM_MAX_POOL_PTRS-2; i<TM_MAX_POOL_PTRS - 1; i-=2){
+        free_index(indexes, i);
+    }
+
+    mu_assert(fill_indexes(indexes, TM_MAX_POOL_PTRS - 1, 63), "filled 2");
+
     return NULL;
 }
 

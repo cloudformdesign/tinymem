@@ -1,4 +1,4 @@
-
+#include "stdio.h"
 #include "tinymem.h"
 #include "tm_pool.h"
 #include "tm_freed.h"
@@ -23,4 +23,11 @@ inline tm_size tm_sizeof(tm_index index){
 
 inline void*  tm_void(tm_index index){
     return Pool_void(&pool, index);
+}
+
+void tm_print_stats(){
+    printf("  available=%u\n", Pool_available(&pool));
+    printf("  heap left=%u\n", Pool_heap_left(&pool));
+    printf("  ptrs left=%u\n", Pool_pointers_left(&pool));
+    printf("  status   =%x\n", Pool_status(&pool, 0xFF));
 }
