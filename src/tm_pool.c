@@ -248,7 +248,9 @@ tm_index Pool_ualloc(Pool *pool, tm_size size){
 
 
 bool Pool_ufree(Pool *pool, tm_index location){
-    if(Pool_uheap_left(pool) < 2){
+    tm_index left = Pool_uheap_left(pool);
+    tmdebug("uheap_left=%u", left);
+    if(left < 2){
         return false;
     }
     pool->ustack-=2;

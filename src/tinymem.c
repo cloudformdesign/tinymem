@@ -21,6 +21,10 @@ inline tm_size tm_sizeof(tm_index index){
     return Pool_sizeof(&pool, index);
 }
 
+inline bool tm_valid(tm_index index){
+    return Pool_filled_bool(&pool, index);
+}
+
 inline void*  tm_void(tm_index index){
     return Pool_void(&pool, index);
 }

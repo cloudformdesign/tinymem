@@ -58,6 +58,14 @@ inline tm_size tm_sizeof(tm_index index);
 
 /*---------------------------------------------------------------------------*/
 /**
+ * \brief           return whether index points to valid data
+ * \param index     tm_index value
+ * \return          1 if it does, 0 if it does not
+ */
+inline bool tm_valid(tm_index index);
+
+/*---------------------------------------------------------------------------*/
+/**
  * \brief           obtain void pointer from tm_index
  * \param index     valid tm_index
  * \return          (void *) with the original data

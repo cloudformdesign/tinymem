@@ -1,6 +1,7 @@
 #include "minunit.h"
 #include "tinymem_platform.h"
 #include "tinymem.h"
+#include "tm_types.h"
 
 #define TABLE_STANDIN NULL
 
@@ -20,10 +21,15 @@ bool check_indexes(tm_index *indexes, tm_index len){
     uint8_t *data;
     for(i=0; i<len; i++){
         if(!indexes[i]) continue;
+        if(!tm_valid(indexes[i])){
+            tmdebug("Fake Valid data");
+            return 0;
+        }
         size = tm_sizeof(indexes[i]);
         data = tm_uint8_p(indexes[i]);
         for(j=0; j<size; j++){
             if(data[j] != index_hash(i, j)){
+                tmdebug("Index check failed");
                 return false;
             }
         }
@@ -34,6 +40,7 @@ bool check_indexes(tm_index *indexes, tm_index len){
 bool fill_indexes(tm_index *indexes, tm_index len, tm_size maxlen){
     // Allocate indexex of size index % mod + 1
     tm_index i;
+    tm_index filled = 0;
     printf("filling indexes\n");
     for(i=0; i<len; i++){
         if(!indexes[i]){
@@ -42,6 +49,8 @@ bool fill_indexes(tm_index *indexes, tm_index len, tm_size maxlen){
                 tm_print_stats();
                 return false;
             }
+            filled++;
+            printf("total filled=%u\n", filled);
         }
     }
     printf("indexes filled\n");
@@ -54,6 +63,10 @@ bool alloc_index(tm_index *indexes, tm_index index, tm_size size){
     /*printf("allocating: %u\n", index);*/
     indexes[index] = tm_alloc(size);
     if(!indexes[index]) return false;
+    if(tm_sizeof(indexes[index]) != size){
+        tmdebug("alloc size wrong size: %u != %u", tm_sizeof(indexes[index]), size);
+        return false;
+    }
     data = tm_uint8_p(indexes[index]);
     for(i=0; i<size; i++){
         data[i] = index_hash(index, i);
