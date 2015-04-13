@@ -135,7 +135,7 @@ typedef struct {
  * \brief           Memory remaining on the heap
  * \return tm_size  Number of bytes remaining on the heap
  */
-#define Pool_heap_left(pool)            (pool->stack - pool->heap)
+#define Pool_heap_left(pool)            ((pool)->stack - (pool)->heap)
 /*---------------------------------------------------------------------------*/
 /**
  * \brief           Get the sizeof data at index in bytes
@@ -147,17 +147,17 @@ typedef struct {
  * \brief           Get the status bit (0 or 1) of name
  * \return uint8_t  status bit
  */
-#define Pool_status(pool, name)         ((pool)->pool[0] & (name))
+#define Pool_status(p, name)         (((p)->pool[0]) & (name))
 /*---------------------------------------------------------------------------*/
 /**
  * \brief           Set the pool status of name to 1
  */
-#define Pool_status_set(pool, name)     ((pool)->pool[0] |= (name))
+#define Pool_status_set(p, name)     ((p)->pool[0] |= (name))
 /*---------------------------------------------------------------------------*/
 /**
  * \brief           Set the pool status of name to 0
  */
-#define Pool_status_clear(pool, name)   ((pool)->pool[0] &= ~(name))
+#define Pool_status_clear(p, name)   ((p)->pool[0] &= ~(name))
 /*---------------------------------------------------------------------------*/
 /**
  * \brief           Convinience functions
@@ -197,7 +197,7 @@ typedef struct {
 /**
  * \brief           cast a void pointer of location
  */
-#define Pool_location_void(pool, loc)           ((void*)(pool)->pool + (loc))    // pointer of location
+#define Pool_location_void(p, loc)           ((void*)(p)->pool + (loc))    // pointer of location
 
 /*---------------------------------------------------------------------------*/
 /**

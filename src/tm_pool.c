@@ -124,9 +124,25 @@ tm_index Pool_find_index(Pool *pool){
 
 tm_index Pool_alloc(Pool *pool, tm_index size){
     tm_index index = Pool_freed_getsize(pool, size);
-    if(index) return index;
+    if(index){
+        if(!Pool_points_bool(pool, index)){
+            tmdebug("ERROR pointer should point, but be unfilled");
+            return 0;
+        }
+        if(Pool_filled_bool(pool, index)){
+            tmdebug("ERROR data in freed array should not be filled!");
+            return 0;
+        }
+        if(Pool_sizeof(pool, index) != size){
+            tmdebug("ERROR value is wrong size!");
+            return 0;
+        }
+        Pool_filled_set(pool, index);
+        pool->used_bytes += Pool_sizeof(pool, index);
+        pool->used_pointers++;
+        return index;
+    }
     if(size > Pool_available(pool)) return 0;
-
     if(size > Pool_heap_left(pool)){
         Pool_status_set(pool, TM_DEFRAG);
         // TODO: this is the "simplest" implementation.
@@ -162,10 +178,17 @@ tm_index Pool_alloc(Pool *pool, tm_index size){
 
 
 void Pool_free(Pool *pool, tm_index index){
+    if(index > TM_MAX_POOL_PTRS || index == 0 || !Pool_filled_bool(pool, index)){
+        return;
+    }
     Pool_filled_clear(pool, index);
     pool->used_bytes -= Pool_sizeof(pool, index);
     pool->used_pointers--;
-    Pool_freed_append(pool, index);  // TODO: if false set defrag flag
+    if(!Pool_freed_append(pool, index)){
+        tmdebug("requesting defrag!");
+        Pool_status_set(pool, TM_DEFRAG);
+        Pool_defrag_full(pool);  // TODO: simple implementation
+    }
 }
 
 
@@ -248,7 +271,9 @@ tm_index Pool_ualloc(Pool *pool, tm_size size){
 
 
 bool Pool_ufree(Pool *pool, tm_index location){
-    if(Pool_uheap_left(pool) < 2){
+    tm_index left = Pool_uheap_left(pool);
+    tmdebug("uheap_left=%u", left);
+    if(left < 2){
         return false;
     }
     pool->ustack-=2;

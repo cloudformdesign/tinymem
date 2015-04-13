@@ -28,6 +28,31 @@ tm_index Pool_freed_getsize(Pool *pool, tm_size size){
     return LIA_pop(pool, &(pool->freed[findex]), size);
 }
 
+bool Pool_freed_isvalid(Pool *pool){
+    tm_index bin, i;
+    tm_index index;
+    for(bin=0; bin<TM_FREED_BINS; bin++){
+        LinkedIndexArray *a = Pool_LIA(pool, pool->freed[bin]);
+        if(!a) continue;
+        for(i=0; i<TM_FREED_BINSIZE; i++){
+            // check that data is valid
+            index = a->indexes[i];
+            if(bin!=freed_hash(Pool_sizeof(pool, index))){
+                tmdebug("error: invalid hash");
+                return false;
+            }
+            if(Pool_filled_bool(pool, index)){
+                tmdebug("error: is filled");
+                return false;
+            }
+            if(!Pool_points_bool(pool, index)){
+                tmdebug("error: does not point");
+                return false;
+            }
+        }
+    }
+    return true;
+}
 
 /* Linked Index Array Methods
  */
@@ -48,10 +73,7 @@ uint16_t LIA_new(Pool *pool){
 
 bool LIA_del(Pool *pool, tm_index uindex){
     Pool_LIA(pool, uindex)->prev = TM_UPOOL_ERROR;
-    if(!Pool_ufree(pool, uindex)){
-        return false;
-    }
-    return true;
+    return Pool_ufree(pool, uindex);
 }
 
 
@@ -100,13 +122,15 @@ tm_index LIA_pop(Pool *pool, tm_index *last, tm_size size){
         return 0;
     }
     uint8_t i, j;
-    tm_index final_last_i;
+    tm_index final_last_i = TM_FREED_BINSIZE + 1;
     tm_index index = 0;
     tm_index temp;
     tm_index uindex = *last;
     LinkedIndexArray *a = Pool_LIA(pool, uindex);
 
-    if(! a) return 0;
+    /*tmdebug("popping size: %u", size);*/
+    if(! a) return 0;  // there are no freed values
+    // Search for an index with the correct size
     while(true){
         for(i=0; i<TM_FREED_BINSIZE; i++){
             if(Pool_sizeof(pool, a->indexes[i]) == size){
@@ -131,6 +155,11 @@ found:
         for(j=i; (j<TM_FREED_BINSIZE) && (a->indexes[j]); j++);
         final_last_i = j - 1;
     }
+    if(final_last_i == TM_FREED_BINSIZE + 1){
+        tmdebug("FINAL LAST I ERROR");
+        return 0;
+    }
+    /*tmdebug("found. last_i=%u", final_last_i);*/
 
     // "pop" the very last index value
     temp = Pool_LIA(pool, *last)->indexes[final_last_i];
@@ -145,9 +174,11 @@ found:
         *last = Pool_LIA(pool, final_last_i)->prev;
         if(!LIA_del(pool, final_last_i)){
             Pool_status_set(pool, TM_DEFRAG);
+            tmdebug("Deletion FAILED");
             Pool_defrag_full(pool);  // TODO: simple implementation
             return 0;
         }
     }
+    /*tmdebug("return: %u", index);*/
     return index;
 }
