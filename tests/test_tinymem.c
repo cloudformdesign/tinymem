@@ -6,12 +6,31 @@
 #define TABLE_STANDIN NULL
 
 #define HASH_PRIME 1677619
+#define MAXPTRS TM_MAX_POOL_PTRS - 1
+
 bool alloc_index(tm_index *indexes, tm_index index, tm_size size);
 
 
 uint8_t index_hash(tm_index value, tm_size i){
     uint32_t h = (value + i) * HASH_PRIME;
     return ((h>>16) ^ (h & 0xFFFF));
+}
+
+bool check_sizes(tm_index *indexes, tm_index len, tm_size maxlen){
+    tm_index i;
+    for(i=0; i<len; i++){
+        if(indexes[i]){
+            if(!tm_valid(indexes[i])){
+                tmdebug("CS:Fake Valid data");
+                return false;
+            }
+            if(tm_sizeof(indexes[i]) != (i % maxlen + 1)){
+                tmdebug("CS:Index wrong size");
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 bool check_indexes(tm_index *indexes, tm_index len){
@@ -49,8 +68,16 @@ bool fill_indexes(tm_index *indexes, tm_index len, tm_size maxlen){
                 tm_print_stats();
                 return false;
             }
+            if(!check_indexes(indexes, len)){
+                tmdebug("check failed after alloc");
+                return false;
+            }
+            if(!check_sizes(indexes, len, maxlen)){
+                tmdebug("check sizes failed after alloc");
+                return false;
+            }
             filled++;
-            printf("total filled=%u\n", filled);
+            /*printf("total filled=%u\n", filled);*/
         }
     }
     printf("indexes filled\n");
@@ -71,7 +98,7 @@ bool alloc_index(tm_index *indexes, tm_index index, tm_size size){
     for(i=0; i<size; i++){
         data[i] = index_hash(index, i);
     }
-    return check_indexes(indexes, index);
+    return true;
 }
 
 bool free_index(tm_index *indexes, tm_index index){
@@ -82,16 +109,20 @@ bool free_index(tm_index *indexes, tm_index index){
 
 char *test_basic(){
     // allocate and dealloc
+    const tm_size maxlen = 63;
     tm_size i;
-    tm_index indexes[TM_MAX_POOL_PTRS - 1] = {0};
-    mu_assert(fill_indexes(indexes, TM_MAX_POOL_PTRS - 1, 63), "filled");
+    tm_index indexes[MAXPTRS] = {0};
+    mu_assert(fill_indexes(indexes, MAXPTRS, maxlen), "filled");
 
     // Deallocate every other one (backwards) and then refill it
-    for(i=TM_MAX_POOL_PTRS-2; i<TM_MAX_POOL_PTRS - 1; i-=2){
+    for(i=TM_MAX_POOL_PTRS-2; i<MAXPTRS; i-=2){
         free_index(indexes, i);
+        mu_assert(!tm_status(0, TM_ANY_DEFRAG), "no defrag request");
     }
 
-    mu_assert(fill_indexes(indexes, TM_MAX_POOL_PTRS - 1, 63), "filled 2");
+    tmdebug("refilling");
+    mu_assert(fill_indexes(indexes, MAXPTRS, maxlen), "filled 2");
+    tmdebug("%u", MAXPTRS);
 
     return NULL;
 }

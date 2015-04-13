@@ -124,7 +124,16 @@ tm_index Pool_find_index(Pool *pool){
 
 tm_index Pool_alloc(Pool *pool, tm_index size){
     tm_index index = Pool_freed_getsize(pool, size);
-    if(index) return index;
+    if(index){
+        if(!Pool_points_bool(pool, index)){
+            tmdebug("ERROR pointer should point, but be unfilled");
+        }
+        if(Pool_filled_bool(pool, index)){
+            tmdebug("ERROR data in freed array should not be filled!");
+        } else{
+            goto found;
+        }
+    }
     if(size > Pool_available(pool)) return 0;
 
     if(size > Pool_heap_left(pool)){
@@ -150,7 +159,9 @@ tm_index Pool_alloc(Pool *pool, tm_index size){
             Pool_status_set(pool, TM_ERROR);
             return 0;
         }
+        goto found;
     }
+found:
     Pool_filled_set(pool, index);
     Pool_points_set(pool, index);
     pool->pointers[index] = (poolptr) {.size = size, .ptr = pool->heap};
@@ -165,7 +176,11 @@ void Pool_free(Pool *pool, tm_index index){
     Pool_filled_clear(pool, index);
     pool->used_bytes -= Pool_sizeof(pool, index);
     pool->used_pointers--;
-    Pool_freed_append(pool, index);  // TODO: if false set defrag flag
+    if(!Pool_freed_append(pool, index)){
+        tmdebug("requesting defrag!");
+        Pool_status_set(pool, TM_DEFRAG);
+        Pool_defrag_full(pool);  // TODO: simple implementation
+    }
 }
 
 

@@ -66,6 +66,15 @@ inline bool tm_valid(tm_index index);
 
 /*---------------------------------------------------------------------------*/
 /**
+ * \brief           return status of poolid
+ * \param poolid    poolid is the first 4 bits of any tm_index, name is status
+ *                  bit name
+ * \return          status bits coresponding to name
+ */
+inline uint8_t tm_status(tm_index poolid, uint8_t name);
+
+/*---------------------------------------------------------------------------*/
+/**
  * \brief           obtain void pointer from tm_index
  * \param index     valid tm_index
  * \return          (void *) with the original data

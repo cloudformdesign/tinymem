@@ -103,7 +103,7 @@ tm_index LIA_pop(Pool *pool, tm_index *last, tm_size size){
     tm_index uindex = *last;
     LinkedIndexArray *a = Pool_LIA(pool, uindex);
 
-    tmdebug("popping size: %u", size);
+    /*tmdebug("popping size: %u", size);*/
     if(! a) return 0;  // there are no freed values
     // Search for an index with the correct size
     while(true){
@@ -134,7 +134,7 @@ found:
         tmdebug("FINAL LAST I ERROR");
         return 0;
     }
-    tmdebug("found. last_i=%u", final_last_i);
+    /*tmdebug("found. last_i=%u", final_last_i);*/
 
     // "pop" the very last index value
     temp = Pool_LIA(pool, *last)->indexes[final_last_i];
@@ -154,6 +154,6 @@ found:
             return 0;
         }
     }
-    tmdebug("return: %u", index);
+    /*tmdebug("return: %u", index);*/
     return index;
 }
