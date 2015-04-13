@@ -22,12 +22,12 @@ inline tm_size tm_sizeof(tm_index index){
 }
 
 inline bool tm_valid(tm_index index){
+    if(!Pool_freed_isvalid(&pool)) return false;
     return Pool_filled_bool(&pool, index);
 }
 
 inline uint8_t tm_status(tm_index poolid, uint8_t name){
     return Pool_status(&pool, name);
-
 }
 
 inline void*  tm_void(tm_index index){

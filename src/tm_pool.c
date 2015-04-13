@@ -138,6 +138,8 @@ tm_index Pool_alloc(Pool *pool, tm_index size){
             return 0;
         }
         Pool_filled_set(pool, index);
+        pool->used_bytes += Pool_sizeof(pool, index);
+        pool->used_pointers++;
         return index;
     }
     if(size > Pool_available(pool)) return 0;
@@ -176,6 +178,9 @@ tm_index Pool_alloc(Pool *pool, tm_index size){
 
 
 void Pool_free(Pool *pool, tm_index index){
+    if(index > TM_MAX_POOL_PTRS || index == 0 || !Pool_filled_bool(pool, index)){
+        return;
+    }
     Pool_filled_clear(pool, index);
     pool->used_bytes -= Pool_sizeof(pool, index);
     pool->used_pointers--;

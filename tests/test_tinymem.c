@@ -77,7 +77,7 @@ bool fill_indexes(tm_index *indexes, tm_index len, tm_size maxlen){
                 return false;
             }
             filled++;
-            /*printf("total filled=%u\n", filled);*/
+            printf("total filled=%u\n", filled);
         }
     }
     printf("indexes filled\n");
