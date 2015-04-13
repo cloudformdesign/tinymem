@@ -127,15 +127,20 @@ tm_index Pool_alloc(Pool *pool, tm_index size){
     if(index){
         if(!Pool_points_bool(pool, index)){
             tmdebug("ERROR pointer should point, but be unfilled");
+            return 0;
         }
         if(Pool_filled_bool(pool, index)){
             tmdebug("ERROR data in freed array should not be filled!");
-        } else{
-            goto found;
+            return 0;
         }
+        if(Pool_sizeof(pool, index) != size){
+            tmdebug("ERROR value is wrong size!");
+            return 0;
+        }
+        Pool_filled_set(pool, index);
+        return index;
     }
     if(size > Pool_available(pool)) return 0;
-
     if(size > Pool_heap_left(pool)){
         Pool_status_set(pool, TM_DEFRAG);
         // TODO: this is the "simplest" implementation.
@@ -159,9 +164,7 @@ tm_index Pool_alloc(Pool *pool, tm_index size){
             Pool_status_set(pool, TM_ERROR);
             return 0;
         }
-        goto found;
     }
-found:
     Pool_filled_set(pool, index);
     Pool_points_set(pool, index);
     pool->pointers[index] = (poolptr) {.size = size, .ptr = pool->heap};
